@@ -3,12 +3,12 @@ A library for exporting your tracker data from the Fitbit.
 It's meant to be used for extracting raw tracker data and **not** as a backup tool. It does not cover all available fields, but rather aims to capture the most granular data available.
 
 ## Status
-[ ] Activities
-[x] Heart rate
-[ ] Location
-[ ] Nutrition
-[x] Sleep
-[ ] Weight
+- [ ] Activities
+- [x] Heart rate
+- [ ] Location
+- [ ] Nutrition
+- [x] Sleep
+- [ ] Weight
 
 ## Prerequisites
 To use this library, you need to create an OAuth2 application on [dev.fitbit.com](https://dev.fitbit.com/apps/new). To get the full data, you should mark the application as **Personal** type.
