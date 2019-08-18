@@ -55,6 +55,8 @@ func main() {
 }
 ```
 
+**Note**: Keep in mind that the API rate limit is 150 requests per hour.
+
 ## Initial run
 When running for the first time (or adding more scopes), you'll have to accept the scopes manually in a browser.
 You'll get a message like this in the stdout:

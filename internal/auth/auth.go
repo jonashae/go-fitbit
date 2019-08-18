@@ -48,6 +48,11 @@ func (handler Handler) Client(context context.Context) (*http.Client, error) {
 	return oauth2.NewClient(context, tokenSource), nil
 }
 
+// Reset removes the stored tokens and restarts the auth process
+func (handler Handler) Reset() error {
+	return handler.storage.Wipe()
+}
+
 func (handler *Handler) acquireToken() (*oauth2.Token, error) {
 	token, err := handler.loadStoredToken()
 	if err != nil {
@@ -68,7 +73,7 @@ func (handler *Handler) loadStoredToken() (*oauth2.Token, error) {
 
 	token, err := handler.storage.Load()
 	if err != nil {
-		log.Printf("Error loading token from storage: %s\n", err.Error())
+		log.Printf("error loading token from storage: %s\n", err.Error())
 	}
 
 	return token, err
@@ -81,7 +86,7 @@ func (handler *Handler) requestInitialToken() (*oauth2.Token, error) {
 	}
 
 	authURL := handler.config.AuthCodeURL(state.String())
-	log.Printf("Visit URL: %s\n", authURL)
+	log.Printf("visit URL: %s\n", authURL)
 
 	callback := NewCallbackServer(handler.callbackPort)
 	context, cancel := context.WithTimeout(context.Background(), timeout)

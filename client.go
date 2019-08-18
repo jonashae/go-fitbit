@@ -3,9 +3,13 @@ package fitbit
 import (
 	"context"
 	"encoding/json"
+	"errors"
+	"log"
+	"net/http"
 	"net/url"
 	"time"
 
+	"github.com/byonchev/go-fitbit/internal/api"
 	"github.com/byonchev/go-fitbit/internal/auth"
 )
 
@@ -49,9 +53,42 @@ func (client Client) getResource(path string, params url.Values, out interface{}
 	}
 
 	defer response.Body.Close()
+	return client.handleResponse(response, out)
+}
 
+func (client Client) handleResponse(response *http.Response, out interface{}) error {
+	statusCode := response.StatusCode
 	decoder := json.NewDecoder(response.Body)
-	return decoder.Decode(out)
+
+	if statusCode == http.StatusOK {
+		return decoder.Decode(out)
+	}
+
+	var result api.GenericResponse
+	decoder.Decode(&result)
+
+	if len(result.Errors) == 0 {
+		log.Printf("received status code %d\n", statusCode)
+	}
+
+	for _, err := range result.Errors {
+		log.Printf("[%d] %s: %s\n", statusCode, err.Type, err.Message)
+	}
+
+	if statusCode == http.StatusUnauthorized {
+		client.authHandler.Reset()
+		return errors.New("authorization error")
+	}
+
+	if statusCode == http.StatusTooManyRequests {
+		return errors.New("too many requests")
+	}
+
+	if statusCode >= 400 && statusCode < 500 {
+		return errors.New("bad request")
+	}
+
+	return errors.New("unknown error")
 }
 
 func (client Client) createURL(path string, params url.Values) *url.URL {

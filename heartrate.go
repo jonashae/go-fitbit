@@ -16,7 +16,7 @@ const (
 
 // HeartRateMeasurement represents the heartrate at a point in time
 type HeartRateMeasurement struct {
-	Time  LocalTime `json:"time"`
+	Date  LocalTime `json:"time"`
 	Value int       `json:"value"`
 }
 
@@ -38,8 +38,8 @@ func (client Client) GetHeartRateLogs(date time.Time, resolution DataResolution)
 
 	// Adds the missing date part in the time
 	for i, entry := range dataset {
-		adjusted := entry.Time.AddDate(date.Year(), int(date.Month())-1, int(date.Day())-1)
-		dataset[i].Time = LocalTime{adjusted}
+		adjusted := entry.Date.AddDate(date.Year(), int(date.Month())-1, int(date.Day())-1)
+		dataset[i].Date = LocalTime{adjusted}
 	}
 
 	return dataset, nil

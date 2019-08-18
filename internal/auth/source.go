@@ -26,7 +26,7 @@ func (source PersistingTokenSource) Token() (*oauth2.Token, error) {
 
 	err = source.persister.Persist(token)
 	if err != nil {
-		log.Printf("Error while persisting token: %s\n", err.Error())
+		log.Printf("error while persisting token: %s\n", err.Error())
 	}
 
 	return token, nil
