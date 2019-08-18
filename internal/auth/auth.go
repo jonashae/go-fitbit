@@ -97,5 +97,5 @@ func (handler *Handler) requestInitialToken() (*oauth2.Token, error) {
 
 func (handler *Handler) createTokenSource(context context.Context, token *oauth2.Token) oauth2.TokenSource {
 	original := handler.config.TokenSource(context, token)
-	return persistingTokenSource{original: original, persister: handler.storage}
+	return NewPersistingTokenSource(original, handler.storage)
 }

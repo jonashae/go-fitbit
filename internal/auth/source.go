@@ -7,13 +7,18 @@ import (
 )
 
 // PersistingTokenSource is a token source that persist token on refresh
-type persistingTokenSource struct {
+type PersistingTokenSource struct {
 	original  oauth2.TokenSource
 	persister TokenPersister
 }
 
-// Token returns a valid token
-func (source persistingTokenSource) Token() (*oauth2.Token, error) {
+// NewPersistingTokenSource creates a new persisting token source
+func NewPersistingTokenSource(original oauth2.TokenSource, persister TokenPersister) *PersistingTokenSource {
+	return &PersistingTokenSource{original: original, persister: persister}
+}
+
+// Token returns a token from the original source and persists it
+func (source PersistingTokenSource) Token() (*oauth2.Token, error) {
 	token, err := source.original.Token()
 	if err != nil {
 		return nil, err
