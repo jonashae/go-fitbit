@@ -2,45 +2,45 @@ package fitbit
 
 import (
 	"fmt"
+	"github.com/tidwall/gjson"
 	"time"
 )
 
-// DataResolution determines the granularity of the heart rate data
-type DataResolution = string
 
-// Available resolution levels
-const (
-	OneSecondResolution DataResolution = "1sec"
-	OneMinuteResolution DataResolution = "1min"
-)
+func (client Client) GetHeartrate(date time.Time) Heartrate {
 
-// HeartRateMeasurement represents the heartrate at a point in time
-type HeartRateMeasurement struct {
-	Date  LocalTime `json:"time"`
-	Value int       `json:"value"`
+	path := fmt.Sprintf("/1/user/-/activities/heart/date/%s/1d/1min", date.Format(dateLayout))
+	json := client.getJson(path)
+
+	activeDate := json.Get("activities-heart.0.dateTime").String()
+
+	var Heartrate Heartrate
+
+	json.Get("activities-heart-intraday.dataset").ForEach(func(key, value gjson.Result) bool {
+
+		var entry HeartrateEntry
+
+		parsedTime, _ := time.Parse("2006-01-0215:04:05", activeDate + value.Get("time").String())
+
+		entry.Timestamp = parsedTime.UnixNano()
+		entry.BPM = value.Get("value").Float()
+
+		Heartrate.HeartrateEntry = append(Heartrate.HeartrateEntry, entry)
+
+		return true // keep iterating
+	})
+
+	return Heartrate
 }
 
-// GetHeartRateLogs returns all heartrate time series for a given date
-func (client Client) GetHeartRateLogs(date time.Time, resolution DataResolution) ([]HeartRateMeasurement, error) {
-	var result struct {
-		Root struct {
-			DataSet []HeartRateMeasurement `json:"dataset"`
-		} `json:"activities-heart-intraday"`
-	}
 
-	path := fmt.Sprintf("/1/user/-/activities/heart/date/%s/1d/%s", date.Format(dateLayout), resolution)
-	err := client.getResource(path, nil, &result)
-	if err != nil {
-		return nil, err
-	}
-
-	dataset := result.Root.DataSet
-
-	// Adds the missing date part in the time
-	for i, entry := range dataset {
-		adjusted := entry.Date.AddDate(date.Year(), int(date.Month())-1, int(date.Day())-1)
-		dataset[i].Date = LocalTime{adjusted}
-	}
-
-	return dataset, nil
+type Heartrate struct {
+	HeartrateEntry []HeartrateEntry
 }
+
+type HeartrateEntry struct {
+	Timestamp int64
+	BPM     float64
+}
+
+

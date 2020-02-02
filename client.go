@@ -4,13 +4,16 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
+	"github.com/tidwall/gjson"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"net/url"
 	"time"
 
-	"github.com/byonchev/go-fitbit/internal/api"
-	"github.com/byonchev/go-fitbit/internal/auth"
+	"github.com/jonashae/go-fitbit/internal/api"
+	"github.com/jonashae/go-fitbit/internal/auth"
 )
 
 const baseURL = "https://api.fitbit.com"
@@ -36,24 +39,63 @@ func NewClient(config Config) *Client {
 	return &Client{authHandler: authHandler}
 }
 
-func (client Client) getResource(path string, params url.Values, out interface{}) error {
+
+
+func (client Client) getJson(path string) gjson.Result {
 	context, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
+
+
 	httpClient, err := client.authHandler.Client(context)
 	if err != nil {
-		return err
 	}
 
-	url := client.createURL(path, params)
+
+	url := client.createURL(path, nil)
+
+	fmt.Println(url)
 
 	response, err := httpClient.Get(url.String())
 	if err != nil {
-		return err
+
+	}
+
+	var json gjson.Result
+
+	if response.StatusCode == http.StatusOK {
+		bodyBytes, err := ioutil.ReadAll(response.Body)
+		if err != nil {
+			log.Fatal(err)
+		}
+		json = gjson.Parse(string(bodyBytes))
+		return json
 	}
 
 	defer response.Body.Close()
-	return client.handleResponse(response, out)
+	return json
+}
+
+
+
+func (client Client) getResource(path string, params url.Values, out interface{}) error {
+context, cancel := context.WithTimeout(context.Background(), timeout)
+defer cancel()
+
+httpClient, err := client.authHandler.Client(context)
+if err != nil {
+return err
+}
+
+url := client.createURL(path, params)
+
+response, err := httpClient.Get(url.String())
+if err != nil {
+return err
+}
+
+defer response.Body.Close()
+return client.handleResponse(response, out)
 }
 
 func (client Client) handleResponse(response *http.Response, out interface{}) error {
